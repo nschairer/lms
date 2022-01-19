@@ -50,7 +50,7 @@ export async function getLeadDetailed(id: string, txn?: IKnex): Promise<LeadDeta
     .leftJoin('history', 'leads.id', 'history.lead_id')
     .select([
         'leads.*',
-        knex.raw('json_agg(history.*) as history')
+        knex.raw('json_agg(history.*) filter (where history.id is not null) as history')
     ])
     .groupBy('leads.id') as LeadDetailed[];
     return lead;

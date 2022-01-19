@@ -150,9 +150,9 @@ import { Prop, Component, Vue } from 'vue-property-decorator';
 import { Lead }           from '@/interfaces';
 import axios              from 'axios';
 import dayjs              from 'dayjs';
-import relativeTime       from "dayjs/plugin/relativeTime";
+import relativeTime       from 'dayjs/plugin/relativeTime';
 import modal              from '@/components/common/modal.vue';
-dayjs.extend(relativeTime)
+dayjs.extend(relativeTime);
 
 
 @Component({
@@ -212,6 +212,9 @@ export default class extends Vue {
 
     get leadHistory() {
         if ( this.lead ) {
+            this.lead.history.map((h:any) => {
+                h.created = h.created + 'Z';
+            })
             return this.lead.history.sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
         } else {
             return []
@@ -236,7 +239,7 @@ export default class extends Vue {
     {
         return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt() + 0x1F1A5));
     }
-    dayjs(date: string) {
+    dayjs(date: Date) {
         return dayjs(date);
     }
 }

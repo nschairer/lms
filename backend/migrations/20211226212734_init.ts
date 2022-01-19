@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
     .raw(`
          CREATE TABLE leads (
              id         uuid default uuid_generate_v4(),
-             created    timestamp without time zone default current_timestamp not null,
+             created    timestamp without time zone default now() not null,
              firstname  text,
              lastname   text,
              email      text not null unique,
@@ -27,7 +27,7 @@ export async function up(knex: Knex): Promise<void> {
      .raw(`
           CREATE TABLE history (
               id        uuid default uuid_generate_v4(),
-              created   timestamp without time zone default current_timestamp not null,
+              created   timestamp without time zone default now() not null,
               lead_id   uuid not null,
               type      text not null,
               diff      jsonb not null,
@@ -41,8 +41,8 @@ export async function up(knex: Knex): Promise<void> {
      .raw(`
           CREATE TABLE events (
               id            uuid default uuid_generate_v4(),
-              created       timestamp without time zone default current_timestamp not null,
-              scheduled_for timestamp without time zone default current_timestamp not null,
+              created       timestamp without time zone default now() not null,
+              scheduled_for timestamp without time zone not null,
               lead_id       uuid not null,
               notes         text,
               type          text not null,
