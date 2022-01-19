@@ -31,11 +31,12 @@
                           <div>{{lead.source}}</div>
                       </div>
                   </div>
-                  <div class="w-full mt-2">
-                      <div class="font-semibold text-sm pb-2">Notes</div>
-                      <div class="bg-gray-100 whitespace-pre-line p-2 px-4 text-xs">
+                  <div class="w-full mt-2 px-4 mb-2">
+                      <div class="font-semibold flex items-center pb-2"><span class="icon-books mr-1"></span>Notes</div>
+                      <div v-if="lead.notes" class="bg-gray-100 whitespace-pre-line p-2 text-xs">
                           {{lead.notes || 'No notes'}}
                       </div>
+                      <div v-else>No notes.</div>
                   </div>
               </div>
               <div class="rounded shadow-lg p-4">
@@ -77,8 +78,30 @@
           v-model="showHistoryModal"
           v-if="lead"
       >
-          <div class="bg-white rounded p-6 w-full h-full md:w-1/2 md:h-4/5 overflow-auto">
-              {{historyModalObj}}
+          <div class="bg-white rounded p-6 w-full h-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
+              <div class="flex justify-between">
+                  <div>{{dayjs(historyModalObj.created).fromNow()}}</div>
+                  <div class="flex">
+                      <span class="icon-pencil mx-2"></span>
+                      <div class="text-sm text-gray-900">{{historyModalObj.type}} <span class="text-gray-400">by</span> Noah Schairer</div>
+                  </div>
+              </div>
+              <div class="flex-1">
+                  <div class="mt-2 text-sm" v-for="(value, name) in historyModalObj.diff">
+                      <div class="font-semibold mb-2">{{name.charAt(0).toUpperCase() + name.slice(1)}}</div>
+                      <div class="flex">
+                          <div style="background-color: #fb7185;" class="text-white white-space-pre-line border w-full mx-1 py-2 px-3">
+                              <span class="font-bold text-xl">-&nbsp</span>{{value.old || 'Empty'}}
+                          </div>
+                          <div style="background-color: #86efac;" class="border whitespace-pre-line w-full mx-1 py-2 px-3 text-gray-700">
+                              <span class="font-bold text-xl">+&nbsp</span>{{value.new || 'Empty'}}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="flex justify-end">
+                  <button @click="closeHistoryModal" class="border border-black rounded w-36 text-black bg-white mr-3 mt-3 p-1 hover:bg-black hover:text-white">Close</button>
+              </div>
           </div>
       </modal>
       <modal
