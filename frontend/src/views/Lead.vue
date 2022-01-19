@@ -33,7 +33,7 @@
                   </div>
                   <div class="w-full mt-2">
                       <div class="font-semibold text-sm pb-2">Notes</div>
-                      <div class="bg-gray-100 whitespace-pre-line p-2 text-xs">
+                      <div class="bg-gray-100 whitespace-pre-line p-2 px-4 text-xs">
                           {{lead.notes || 'No notes'}}
                       </div>
                   </div>
@@ -56,7 +56,7 @@
                   </div>
                   <div v-else>
                       <div v-for="(change,i) in leadHistory">
-                          <div @click="showHistoryModal = true" class="grid grid-cols-4  p-2 cursor-pointer hover:bg-gray-100">
+                          <div @click="openHistoryModal(change)" class="grid grid-cols-4  p-2 cursor-pointer hover:bg-gray-100">
                               <div class="col-span-2">
                                   <div class="text-sm text-gray-400">{{dayjs(change.created).fromNow()}}</div>
                               </div>
@@ -78,7 +78,7 @@
           v-if="lead"
       >
           <div class="bg-white rounded p-6 w-full h-full md:w-1/2 md:h-4/5 overflow-auto">
-              xxx display diff
+              {{historyModalObj}}
           </div>
       </modal>
       <modal
@@ -163,6 +163,7 @@ export default class extends Vue {
 
     showEditModal         = false;
     showHistoryModal      = false;
+    historyModalObj       = {};
     lead:     Lead | null = null;
     leadEdit: Lead | null = null;
     created() {
@@ -191,6 +192,16 @@ export default class extends Vue {
         } catch (e) {
             console.log(e);
         }
+    }
+
+    openHistoryModal(obj: any) {
+        this.showHistoryModal = true;
+        this.historyModalObj  = obj
+    }
+
+    closeHistoryModal() {
+        this.showHistoryModal = false;
+        this.historyModalObj = {};
     }
 
     closeEditModal() {
