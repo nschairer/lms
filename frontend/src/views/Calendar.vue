@@ -22,7 +22,7 @@
       </v-calendar>
   </div>
 </template>
-<style lang="scss" scoped>
+<style lang="scss">
 ::-webkit-scrollbar {
     width: 0px;
 }

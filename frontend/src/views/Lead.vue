@@ -78,17 +78,31 @@
           v-model="showAddEventModal"
           v-if="lead"
       >
-          <div class="bg-white rounded p-6 w-full h-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
+          <div class="bg-white rounded p-6 h-full w-full md:w-min md:h-4/5 overflow-auto flex flex-col">
               <div class="font-semibold">
-                  Select Date
+                  Title
               </div>
-              <v-date-picker mode="dateTime" is-range :attributes="leadEvents">
+              <input class="border mb-2"/>
+              <div class="font-semibold">
+                  Method
+              </div>
+              <div class="grid grid-cols-3 my-2">
+                  <button class="text-center p-2"><span class="icon-mail mr-1"></span>Email</button>
+                  <button class="text-center p-2 bg-blue-100"><span class="icon-phone mr-1"></span>Call</button>
+                  <button class="text-center p-2"><span class="icon-users mr-1"></span>Meeting</button>
+                  <button class="text-center p-2"><span class="icon-plus mr-1"></span>Other</button>
+              </div>
+              <div class="font-semibold">
+                  When
+              </div>
+              <v-date-picker 
+                  v-model="eventRange" mode="dateTime" is-range :attributes="leadEvents">
                   <template v-slot="{ inputValue, inputEvents }">
-                      <div class="flex justify-start items-center">
+                      <div class="flex justify-start items-center mb-2">
                           <input
                               :value="inputValue.start"
                               v-on="inputEvents.start"
-                              class="border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                              class="text-sm border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
                           />
                           <svg
                               class="w-4 h-4 mx-2"
@@ -106,19 +120,19 @@
                           <input
                               :value="inputValue.end"
                               v-on="inputEvents.end"
-                              class="border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                              class="text-sm border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
                           />
                       </div>
                   </template>
-              </v-date-picker>
+                  </v-date-picker>
               <div class="font-semibold">
                   Notes
               </div>
               <textarea class="border">
               </textarea>
-              <div>
-                  <button>Cancel</button>
-                  <button>Submit</button>
+              <div class="flex justify-end">
+                  <button @click="closeAddEventModal" class="border bg-black text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Cancel</button>
+                  <button class="border bg-blue-600 text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Submit</button>
               </div>
           </div>
       </modal>
@@ -215,7 +229,6 @@
       </modal>
   </div>
 </template>
-
 <script lang="ts">
 import { Prop, Component, Vue } from 'vue-property-decorator';
 import { Lead }           from '@/interfaces';
@@ -224,7 +237,6 @@ import dayjs              from 'dayjs';
 import relativeTime       from 'dayjs/plugin/relativeTime';
 import modal              from '@/components/common/modal.vue';
 dayjs.extend(relativeTime);
-
 
 @Component({
     components: {modal}
@@ -236,6 +248,10 @@ export default class extends Vue {
     showEditModal         = false;
     showHistoryModal      = false;
     historyModalObj       = {};
+    eventRange = {
+        start: new Date(),
+        end:   new Date()
+    }
     lead:     Lead | null = null;
     leadEdit: Lead | null = null;
     created() {
@@ -265,7 +281,6 @@ export default class extends Vue {
             console.log(e);
         }
     }
-
 
     openAddEventModal() {
         this.showAddEventModal = true;
