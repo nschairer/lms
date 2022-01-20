@@ -2,7 +2,7 @@
   <div class="p-4">
       <div v-if="lead != null" class="grid grid-cols-1 md:grid-cols-8 gap-4">
           <div class="md:col-span-5">
-              <div class="relative rounded shadow-lg p-2 flex flex-col justify-center items-center">
+              <div class="relative rounded shadow-md p-2 flex flex-col justify-center items-center mb-2">
                   <div class="w-full flex justify-end pr-2">
                       <button @click="showEditModal = true" class="rounded-full text-sm border border-black mr-3 mt-3 p-1 hover:bg-black hover:text-white flex items-center px-2"><span class="icon-pencil mr-1"></span>edit</button>
                   </div>
@@ -39,10 +39,10 @@
                       <div v-else>No notes.</div>
                   </div>
               </div>
-              <div class="rounded shadow-lg p-4">
+              <div class="rounded shadow-md md:shadow-lg p-4">
                   <div class="flex justify-between items-center">
                       <div class="text-xl text-left font-bold">Upcoming</div>
-                      <button class="rounded-full text-sm border border-black mr-3 mt-3 p-1 hover:bg-black hover:text-white flex items-center px-2"><span class="icon-plus mr-1"></span>add</button>
+                      <button @click="openAddEventModal" class="rounded-full text-sm border border-black mr-3 mt-3 p-1 hover:bg-black hover:text-white flex items-center px-2"><span class="icon-plus mr-1"></span>add</button>
                   </div>
                   <div class="p-2">
                       No events scheduled. 
@@ -74,6 +74,54 @@
               </div>
           </div>
       </div>
+      <modal
+          v-model="showAddEventModal"
+          v-if="lead"
+      >
+          <div class="bg-white rounded p-6 w-full h-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
+              <div class="font-semibold">
+                  Select Date
+              </div>
+              <v-date-picker mode="dateTime" is-range :attributes="leadEvents">
+                  <template v-slot="{ inputValue, inputEvents }">
+                      <div class="flex justify-start items-center">
+                          <input
+                              :value="inputValue.start"
+                              v-on="inputEvents.start"
+                              class="border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                          />
+                          <svg
+                              class="w-4 h-4 mx-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                          >
+                              <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                              />
+                          </svg>
+                          <input
+                              :value="inputValue.end"
+                              v-on="inputEvents.end"
+                              class="border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                          />
+                      </div>
+                  </template>
+              </v-date-picker>
+              <div class="font-semibold">
+                  Notes
+              </div>
+              <textarea class="border">
+              </textarea>
+              <div>
+                  <button>Cancel</button>
+                  <button>Submit</button>
+              </div>
+          </div>
+      </modal>
       <modal
           v-model="showHistoryModal"
           v-if="lead"
@@ -184,6 +232,7 @@ dayjs.extend(relativeTime);
 export default class extends Vue {
     @Prop({required: true}) id!: string;
 
+    showAddEventModal     = false;
     showEditModal         = false;
     showHistoryModal      = false;
     historyModalObj       = {};
@@ -217,6 +266,15 @@ export default class extends Vue {
         }
     }
 
+
+    openAddEventModal() {
+        this.showAddEventModal = true;
+    }
+
+    closeAddEventModal() {
+        this.showAddEventModal = false;
+    }
+
     openHistoryModal(obj: any) {
         this.showHistoryModal = true;
         this.historyModalObj  = obj
@@ -242,6 +300,33 @@ export default class extends Vue {
         } else {
             return []
         }
+    }
+
+    get leadEvents() {
+        return [
+                {
+                    key: '11234',
+                    dot: true,
+                    dates: new Date(),
+                    popover: {
+                        label: 'Call Johnny Gaboff'
+                    },
+                    customData: {
+                        stuff: 'yeah'
+                    }
+                },
+                {
+                    key: '112345',
+                    dot: true,
+                    dates: new Date(new Date().getTime() + 60000),
+                    popover: {
+                        label: 'Call Jude DiGiacomo'
+                    },
+                    customData: {
+                        stuff: 'yeah'
+                    }
+                }
+        ]
     }
 
     get leadEditChanged() {
