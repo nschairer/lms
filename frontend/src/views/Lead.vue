@@ -126,6 +126,15 @@
                   </template>
                   </v-date-picker>
               <div class="font-semibold">
+                  Frequency
+              </div>
+              <select class="border mb-2">
+                  <option value="once">Once</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+              </select>
+              <div class="font-semibold">
                   Notes
               </div>
               <textarea class="border">
