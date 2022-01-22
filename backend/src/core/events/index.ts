@@ -15,17 +15,14 @@ export async function createNextInstance(eventId: string): Promise<EventInstance
     }
 }
 
-
-
-
 export async function insertEvent(
+    event:         Event,
     eventInstance: EventInstance,
-    frequency:     EventFrequency,
     txn:           Knex.Transaction
 ): Promise<EventInstance> {
     try {
         const [newEvent] = await txn<Event>('events')
-        .insert({frequency})
+        .insert(event)
         .returning('*')
 
         eventInstance.event_id = newEvent.id!;
