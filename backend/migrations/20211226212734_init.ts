@@ -40,20 +40,39 @@ export async function up(knex: Knex): Promise<void> {
       `)
      .raw(`
           CREATE TABLE events (
-              id            uuid default uuid_generate_v4(),
-              created       timestamp without time zone default now() not null,
-              scheduled_for timestamp without time zone not null,
-              lead_id       uuid not null,
-              notes         text,
-              type          text not null,
-              props         jsonb not null,
-              PRIMARY KEY(id),
+              id        uuid default uuid_generate_v4(),
+              created   timestamp without time zone default now() not null,
+              title     text not null,
+              type      text not null,
+              notes     text,
+              lead_id   uuid not null,
+              frequency text,
+              active    boolean default true not null,
+              PRIMARY KEY (id),
               CONSTRAINT fk_leads
                 FOREIGN KEY (lead_id)
                     REFERENCES leads(id)
                     ON DELETE CASCADE,
+              CONSTRAINT events_freq_check
+                CHECK ( frequency in ( 'once', 'daily', 'weekly', 'monthly', 'yearly' ) ),
               CONSTRAINT events_type_check
                 CHECK ( type in ( 'phone_call', 'meeting', 'custom' ) )
+          );
+    `)
+     .raw(`
+          CREATE TABLE event_instances (
+              id            uuid default uuid_generate_v4(),
+              event_id      uuid not null,
+              created       timestamp without time zone default now() not null,
+              starts        timestamp without time zone not null,
+              ends          timestamp without time zone not null,
+              notes         text,
+              props         jsonb not null,
+              PRIMARY KEY(id),
+              CONSTRAINT fk_events
+                FOREIGN KEY (event_id)
+                    REFERENCES events(id)
+                    ON DELETE CASCADE
           );
       `)
 }

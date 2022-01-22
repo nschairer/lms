@@ -2,6 +2,27 @@ import { Knex } from 'knex';
 
 export type IKnex = Knex.Transaction | Knex
 
+export type EventFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export interface Event {
+    id?:       string;
+    frequency: EventFrequency;
+    created?:  Date;
+    title:     string;
+    type:      string;
+    notes:     string;
+    lead_id:   string;
+}
+export interface EventInstance {
+    id?:       string;
+    event_id?: string;
+    method:    string;
+    created?:  Date;
+    starts:    Date;
+    ends:      Date;
+    notes?:    string;
+    props?:    any;
+}
+
 export interface Lead {
     id?:        string;
     firstname?: string;
