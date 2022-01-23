@@ -4,13 +4,15 @@ import Leads    from '../views/Leads.vue'
 import Lead     from '../views/Lead.vue'
 import Calendar from '../views/Calendar.vue'
 import Import   from '../views/Import.vue'
+import Home   from '../views/Home.vue'
 
 Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [
   {
       path: '/',
-      redirect: '/leads'
+      name: 'Home',
+      component: Home
   },
   {
     path: '/leads',

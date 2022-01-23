@@ -81,7 +81,7 @@
           <div class="md:col-span-3">
               <div class="rounded shadow-lg p-2 flex flex-col">
                   <div class="text-xl text-left font-bold">History</div>
-                  <div v-if="!lead.history"class="p-4">
+                  <div v-if="!leadHistory"class="p-4">
                       No History
                   </div>
                   <div v-else>
@@ -481,8 +481,8 @@ export default class extends Vue {
                     lead_id: this.id
                 },
                 range: {
-                    start: start.toISOString(),
-                    end:   end.toISOString()
+                    start: start.toUTCString(),
+                    end:   end.toUTCString()
                 }
             };
             const res = await axios.post(`/api/1/events`, body)
@@ -608,7 +608,8 @@ export default class extends Vue {
 
     get leadHistory() {
         if ( this.lead ) {
-            const events = [...this.lead.history!, ...this.lead.events!];
+            const events = [...(this.lead.history || []), ...(this.lead.events ||[])];
+            console.log(events)
             events.map((e:any) => {
                 //XXX fix this in backend
                 if (e.created.charAt(e.created.length-1) != 'Z') {
@@ -621,7 +622,20 @@ export default class extends Vue {
                 if ( new Date(a.start) < new Date() ) return true;
                 return false;
             })
-            .sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
+            .sort((a:any,b:any) => {
+                if ( a.type === 'edit' && b.type != 'edit' ) {
+                    return new Date(b.start).getTime() - new Date(a.created).getTime();
+                }
+                if ( a.type === 'edit' && b.type == 'edit' ) {
+                    return new Date(b.created).getTime() - new Date(a.created).getTime();
+                }
+                if ( a.type !== 'edit' && b.type == 'edit' ) {
+                    return new Date(b.created).getTime() - new Date(a.start).getTime();
+                }
+                if ( a.type !== 'edit' && b.type != 'edit' ) {
+                    return new Date(b.start).getTime() - new Date(a.start).getTime();
+                }
+            })
         } else {
             return []
         }

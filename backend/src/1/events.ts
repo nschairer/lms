@@ -57,4 +57,16 @@ routes.post('/', async ( req, res, next) => {
     }
 })
 
+routes.get('/', async ( req, res, next) => {
+    try {
+        const { start, end } = req.query as { start: any, end: any };
+        const events         = await Events.getAll(parseInt(start), parseInt(end));
+        res.status(200).send({ events });
+    } catch (e) {
+        console.log(e);
+        res.status(400).send();
+    }
+})
+
+
 export default routes;

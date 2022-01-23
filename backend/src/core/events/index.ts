@@ -3,8 +3,21 @@ import knex     from  '@/db';
 import { 
     EventInstance,
     Event,
-    EventFrequency
+    EventFrequency,
+    Timezone
 } from '@/interfaces';
+
+export async function getAll(start: number, end: number): Promise<EventInstance[]> {
+    try { 
+        const events = await knex('event_instances')
+        .leftJoin('leads', 'leads.id', 'event_instances.lead_id')
+        .where(knex.raw('extract(epoch from start)*1000 >= :start',{start}))
+        .where(knex.raw('extract(epoch from start)*1000 < :end',   {end}))
+        return events;
+    } catch (e) {
+        throw e
+    }
+}
 
 export async function createNextInstance(eventId: string): Promise<EventInstance> {
     try { 

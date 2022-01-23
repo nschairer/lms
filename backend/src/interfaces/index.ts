@@ -45,3 +45,9 @@ export interface History {
     lead_id?: string;
     diff?:    Record<string, any>;
 }
+
+
+export type Timezone = string;
+
+
+
