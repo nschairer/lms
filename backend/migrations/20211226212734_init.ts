@@ -65,6 +65,7 @@ export async function up(knex: Knex): Promise<void> {
               event_id      uuid not null,
               start         timestamp without time zone not null,
               "end"         timestamp without time zone not null,
+              complete      boolean default false not null,
               -- Snapshot of parent event so it can be fully editable if need be should add history table too --
               created       timestamp without time zone default now() not null,
               title         text not null,

@@ -167,6 +167,8 @@ export default class Import extends Vue {
                 }
             }
             rows.push(r)
+            //Limit 1 row for preview
+            break
         }
         return rows
     }
