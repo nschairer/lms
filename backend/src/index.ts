@@ -7,7 +7,6 @@ import logger  from '@/logger';
 import config  from '@/config';
 import { authenticateToken } from '@/core/auth';
 
-import { Scheduler } from '@/core/scheduler';
 
 const app  = express()
 const port = 5000
@@ -16,10 +15,6 @@ app.use(express.json());
 
 //Add logger
 app.use(logger)
-
-//Start scheduler
-app.set('scheduler', new Scheduler());
-app.get('scheduler').go();
 
 //Load routes
 const ROUTES = `${__dirname}/1/`

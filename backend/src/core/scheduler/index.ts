@@ -13,7 +13,7 @@ export class Scheduler {
                 from events e
                 left join event_instances ei on e.id = ei.event_id
                 where
-                    e.active
+                    e.active and e.frequency != 'once'
                 group by e.id
             `) as any).rows;
 
@@ -36,10 +36,10 @@ export class Scheduler {
             }
 
             console.log('next to expire', minStart);
-            this.timeout = setTimeout(this.go, minStart);
+            this.timeout = setTimeout(() => this.go(), minStart - new Date().getTime());
         } catch (e) {
             console.log(e)
-            this.timeout = setTimeout(this.go, 2000);
+            this.timeout = setTimeout(() => this.go(), 2000);
         }
     }
 

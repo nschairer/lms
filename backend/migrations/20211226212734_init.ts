@@ -56,7 +56,7 @@ export async function up(knex: Knex): Promise<void> {
               CONSTRAINT events_freq_check
                 CHECK ( frequency in ( 'once', 'daily', 'weekly', 'monthly', 'yearly' ) ),
               CONSTRAINT events_type_check
-                CHECK ( type in ( 'phone_call', 'meeting', 'custom' ) )
+                CHECK ( type in ( 'email', 'phone_call', 'meeting', 'custom' ) )
           );
     `)
      .raw(`
@@ -67,7 +67,7 @@ export async function up(knex: Knex): Promise<void> {
               starts        timestamp without time zone not null,
               ends          timestamp without time zone not null,
               notes         text,
-              props         jsonb not null,
+              props         jsonb,
               PRIMARY KEY(id),
               CONSTRAINT fk_events
                 FOREIGN KEY (event_id)
@@ -82,6 +82,7 @@ export async function down(knex: Knex): Promise<void> {
     await knex.schema
     .raw(`
          DROP TABLE IF EXISTS history;
+         DROP TABLE IF EXISTS event_instances;
          DROP TABLE IF EXISTS events;
          DROP TABLE IF EXISTS leads;
          DROP EXTENSION IF EXISTS "uuid-ossp";

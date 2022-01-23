@@ -1,6 +1,11 @@
 import { Router }      from 'express';
 import knex            from '@/db';
 import Ajv             from  'ajv';
+import {
+    Event,
+    EventInstance
+} from '@/interfaces';
+import * as Events from '@/core/events';
 
 const routes = Router();
 
@@ -17,26 +22,37 @@ const eventPostSchema = {
         event: {
             type: 'object',
             properties: {
-                title:    {type:"string"},
-                notes:    {type:"string"},
-                method:   {type:"string"},
-                starts:   {type:"string", format:"date"},
-                ends:     {type:"string", format:"date"},
-                lead_id:  {type:"string"},
+                title:     {type:"string"},
+                notes:     {type:"string"},
+                type:      {type:"string"},
+                frequency: {enum: ['once', 'daily','weekly','monthly','yearly']},
+                lead_id:   {type:"string"},
             }
         },
-        frequency: { enum: ['daily','weekly','monthly','yearly'] }
+        instance: {
+            type: 'object',
+            properties: {
+                starts:   {type:"string", format:"date"},
+                ends:     {type:"string", format:"date"},
+            }
+        }
     }
 }
 
-routes.post('/', ( req, res, next) => {
-    try {
-    
-        const event = {};
+const validateEventPost = ajv.compile(eventPostSchema);
 
-        res.status(200).send(event);
+routes.post('/', async ( req, res, next) => {
+    const txn = await knex.transaction();
+    try {
+        if ( !validateEventPost(req.body) ) throw validateEventPost.errors;
+
+        const { event, instance } = req.body as { event: Event, instance: EventInstance };
+        const eventInstance = await Events.insertEvent(event, instance, txn);
+        await txn.commit()
+        res.status(200).send({ eventInstance });
     } catch (e) {
         console.log(e);
+        await txn.rollback();
         res.status(400).send();
     }
 })

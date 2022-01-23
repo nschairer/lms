@@ -79,7 +79,7 @@ export default class Leads extends Vue {
     //XXX not sure of this yet
     isoCountryCodeToFlagEmoji(country: string)
     {
-        return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt() + 0x1F1A5));
+        return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt(0) + 0x1F1A5));
     }
 
     async getLeads() {

@@ -82,21 +82,41 @@
               <div class="font-semibold">
                   Title
               </div>
-              <input class="border mb-2"/>
+              <input v-model="eventModalObj.title" class="border mb-2"/>
               <div class="font-semibold">
                   Method
               </div>
               <div class="grid grid-cols-3 my-2">
-                  <button class="text-center p-2"><span class="icon-mail mr-1"></span>Email</button>
-                  <button class="text-center p-2 bg-blue-100"><span class="icon-phone mr-1"></span>Call</button>
-                  <button class="text-center p-2"><span class="icon-users mr-1"></span>Meeting</button>
-                  <button class="text-center p-2"><span class="icon-plus mr-1"></span>Other</button>
+                  <button 
+                      @click="eventModalSetType('email')"
+                      :class="{'bg-blue-100': eventModalObj.type === 'email'}"
+                      class="text-center p-2">
+                      <span class="icon-mail mr-1"></span>Email
+                  </button>
+                  <button 
+                      @click="eventModalSetType('phone_call')"
+                      :class="{'bg-blue-100': eventModalObj.type === 'phone_call'}" 
+                      class="text-center p-2">
+                      <span class="icon-phone mr-1"></span>Call
+                  </button>
+                  <button 
+                      @click="eventModalSetType('meeting')"
+                      :class="{'bg-blue-100': eventModalObj.type === 'meeting'}"
+                      class="text-center p-2">
+                      <span class="icon-users mr-1"></span>Meeting
+                  </button>
+                  <button 
+                      @click="eventModalSetType('other')"
+                      :class="{'bg-blue-100': eventModalObj.type === 'other'}"
+                      class="text-center p-2">
+                      <span class="icon-plus mr-1"></span>Other
+                  </button>
               </div>
               <div class="font-semibold">
                   When
               </div>
               <v-date-picker 
-                  v-model="eventRange" mode="dateTime" is-range :attributes="leadEvents">
+                  v-model="eventModalObj.range" mode="dateTime" is-range :attributes="leadEvents">
                   <template v-slot="{ inputValue, inputEvents }">
                       <div class="flex justify-start items-center mb-2">
                           <input
@@ -128,7 +148,7 @@
               <div class="font-semibold">
                   Frequency
               </div>
-              <select class="border mb-2">
+              <select v-model="eventModalObj.frequency" class="border mb-2">
                   <option value="once">Once</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -137,11 +157,15 @@
               <div class="font-semibold">
                   Notes
               </div>
-              <textarea class="border">
+              <textarea v-model="eventModalObj.notes" class="border">
               </textarea>
               <div class="flex justify-end">
                   <button @click="closeAddEventModal" class="border bg-black text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Cancel</button>
-                  <button class="border bg-blue-600 text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Submit</button>
+                  <button 
+                      @click="submitEvent"
+                      :disabled="cannotSubmitEvent" 
+                      :class="{'opacity-50 cursor-not-allowed':cannotSubmitEvent}" 
+                      class="border bg-blue-600 text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Submit</button>
               </div>
           </div>
       </modal>
@@ -253,10 +277,11 @@ dayjs.extend(relativeTime);
 export default class extends Vue {
     @Prop({required: true}) id!: string;
 
-    showAddEventModal     = false;
-    showEditModal         = false;
-    showHistoryModal      = false;
-    historyModalObj       = {};
+    showAddEventModal = false;
+    showEditModal     = false;
+    showHistoryModal  = false;
+    historyModalObj   = {};
+    eventModalObj     = this.defaultEventModalObj();
     eventRange = {
         start: new Date(),
         end:   new Date()
@@ -266,6 +291,69 @@ export default class extends Vue {
     created() {
         this.getLead();
     }
+
+    eventModalSetType(type: string) {
+        this.eventModalObj.type = type;
+    }
+
+    defaultEventModalObj() {
+        return {
+            title: '',
+            type:  'email',
+            notes: '',
+            frequency: 'once',
+            range: {
+                start: new Date(),
+                end:   new Date() 
+            }
+        }
+    }
+
+    get cannotSubmitEvent() {
+        const {
+            title,
+            type,
+            notes,
+            frequency,
+            range
+        } = this.eventModalObj;
+        const { start, end } = range;
+        return !title || !type || !frequency || !start || !end
+    }
+
+
+    async submitEvent() {
+        try {
+            const {
+                title,
+                type,
+                notes,
+                frequency,
+                range
+            } = this.eventModalObj;
+            const { start, end } = range;
+            const body = { 
+                event: {
+                    title,
+                    type,
+                    notes,
+                    frequency,
+                    lead_id: this.id
+                },
+                instance: {
+                    starts: start,
+                    ends:   end
+                }
+            };
+            const res = await axios.post(`/api/1/events`, body)
+            const { eventInstance } = res.data;
+        } catch (e) {
+            console.log(e);
+        }
+        this.closeAddEventModal();
+    }
+
+
     async getLead() {
         try {
             const res       = await axios.get(`/api/1/leads/${this.id}`)
@@ -297,6 +385,7 @@ export default class extends Vue {
 
     closeAddEventModal() {
         this.showAddEventModal = false;
+        this.eventModalObj     = this.defaultEventModalObj();
     }
 
     openHistoryModal(obj: any) {
@@ -312,15 +401,15 @@ export default class extends Vue {
     closeEditModal() {
         this.showEditModal = false;
         this.leadEdit      = {...this.lead};
-        delete this.leadEdit.history;
+        delete this.leadEdit.history!;
     }
 
     get leadHistory() {
         if ( this.lead ) {
-            this.lead.history.map((h:any) => {
+            this.lead.history!.map((h:any) => {
                 h.created = h.created + 'Z';
             })
-            return this.lead.history.sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
+            return this.lead.history!.sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
         } else {
             return []
         }
@@ -369,7 +458,7 @@ export default class extends Vue {
 
     isoCountryCodeToFlagEmoji(country: string)
     {
-        return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt() + 0x1F1A5));
+        return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt(0) + 0x1F1A5));
     }
     dayjs(date: Date) {
         return dayjs(date);
