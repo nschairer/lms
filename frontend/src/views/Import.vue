@@ -7,9 +7,16 @@
           @drop="pickFile"
           :class="{'bg-gray-100':dragover}"
           class="rounded border-dashed border-2 h-full w-full flex flex-col justify-center items-center">
-          <div class="text-xl font-bold text-gray-900">Drag and Drop</div>
-          <div>OR</div>
-          <input @change="pickFile" type="file" class="font-bold cursor-pointer"/>
+          <div class="text-5xl text-gray-900 text-black">
+              <span class="icon-upload"></span>
+          </div>
+          <div class="flex justify-center items-center">
+              <label class="font-semibold cursor-pointer hover:text-black">
+                  Choose a file
+                  <input title=" " @change="pickFile" type="file" class="hidden font-bold cursor-pointer"/>
+              </label>
+              <span class="text-gray-900 ml-1">or drag it here</span>
+          </div>
       </div>
       <div class="rounded shadow-lg"  v-else>
           <div v-if="loading">
@@ -186,6 +193,7 @@ export default class Import extends Vue {
         }
         try {
             const res = await axios.post('/api/1/import', {leads})
+            this.$router.push('/leads')
         } catch (e) {
             console.log(e);
         }

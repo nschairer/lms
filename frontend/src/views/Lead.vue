@@ -48,8 +48,32 @@
                       No events scheduled. 
                   </div>
                   <div v-else class="p-2">
-                      <div v-for="event in leadUpcoming">
-                          {{event}}
+                      <div v-for="(event, i) in leadUpcoming" @click="openEditEventModal(event)" class="cursor-pointer hover:bg-gray-100">
+                          <div class="my-2 p-2">
+                              <div class="flex justify-between">
+                                  <div class="">
+                                      <span :class="{[typeIconFilter(event.type)]: true}" class="mr-2"></span>
+                                      {{event.title}}<span class="text-sm text-gray-400"> {{event.frequency === 'once' ? '' : '(' + event.frequency + ')'}}</span>
+                                  </div>
+                                  <div class="text-sm text-gray-400">
+                                          {{dayjs(event.start).tz(userTimezone).format('MMMM D, YYYY h:mm A')}}
+                                  </div>
+                              </div>
+                              <div v-if="false" class="text-sm">
+                                  <div class="flex justify-start items-center py-2">
+                                      <span :class="{[typeIconFilter('meeting')]: true}" class="mr-2"></span>
+                                      <div>Attendees</div>
+                                  </div>
+                              </div>
+                              <div v-if="false" class="w-full mt-2 text-sm">
+                                  <div class="font-semibold flex items-center pb-2"><span class="icon-books mr-1"></span>Notes</div>
+                                  <div v-if="event.notes" class="bg-gray-100 whitespace-pre-line p-2 text-xs">
+                                      {{event.notes || 'No notes'}}
+                                  </div>
+                                  <div class="text-sm" v-else>None</div>
+                              </div>
+                          </div>
+                          <hr v-if="i !== leadUpcoming.length - 1">
                       </div>
                   </div>
               </div>
@@ -62,13 +86,19 @@
                   </div>
                   <div v-else>
                       <div v-for="(change,i) in leadHistory">
-                          <div @click="openHistoryModal(change)" class="grid grid-cols-4  p-2 cursor-pointer hover:bg-gray-100">
+                          <div @click="change.type === 'edit' ? openHistoryModal(change) : openEditEventModal(change)" class="grid grid-cols-4  p-2 cursor-pointer hover:bg-gray-100">
                               <div class="col-span-2">
                                   <div class="text-sm text-gray-400">{{dayjs(change.created).fromNow()}}</div>
                               </div>
-                              <div class="col-span-2 flex justify-center">
-                                  <span :class="{[typeIconFilter(change.type)]: true}" class="mx-2"></span>
-                                  <div class="text-sm text-gray-900">{{typeFilter(change.type)}} <span class="text-gray-400">by</span> Noah Schairer</div>
+                              <div class="col-span-2 flex justify-start">
+                                  <div v-if="change.type === 'edit'" class="flex">
+                                      <span :class="{[typeIconFilter(change.type)]: true}" class="mx-2"></span>
+                                      <div class="text-sm text-gray-900"><span class="text-gray-400">by</span> Noah Schairer</div>
+                                  </div>
+                                  <div v-else class="text-sm text-gray-900">
+                                      <span :class="{[typeIconFilter(change.type)]: true}" class="mx-2"></span>
+                                      {{change.title}}
+                                  </div> 
                               </div>
                           </div>
                           <div>
@@ -80,10 +110,108 @@
           </div>
       </div>
       <modal
+          v-model="showEditEventModal"
+        >
+            <div class="bg-white rounded p-6 h-full w-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
+              <div class="font-semibold">
+                  Title
+              </div>
+              <input v-model="editEventModalObj.title" class="border mb-2"/>
+              <div class="font-semibold">
+                  Method
+              </div>
+              <div class="grid grid-cols-3 my-2">
+                  <button 
+                      @click="eventModalSetType('email')"
+                      :class="{'bg-blue-100': editEventModalObj.type === 'email'}"
+                      class="text-center p-2">
+                      <span class="icon-mail mr-1"></span>Email
+                  </button>
+                  <button 
+                      @click="eventModalSetType('phone_call')"
+                      :class="{'bg-blue-100': editEventModalObj.type === 'phone_call'}" 
+                      class="text-center p-2">
+                      <span class="icon-phone mr-1"></span>Call
+                  </button>
+                  <button 
+                      @click="eventModalSetType('meeting')"
+                      :class="{'bg-blue-100': editEventModalObj.type === 'meeting'}"
+                      class="text-center p-2">
+                      <span class="icon-users mr-1"></span>Meeting
+                  </button>
+                  <button 
+                      @click="eventModalSetType('other')"
+                      :class="{'bg-blue-100': editEventModalObj.type === 'other'}"
+                      class="text-center p-2">
+                      <span class="icon-plus mr-1"></span>Other
+                  </button>
+              </div>
+              <div class="font-semibold">
+                  When
+              </div>
+              <v-date-picker 
+                  v-model="editEventModalObj.range" mode="dateTime" is-range :attributes="leadEvents">
+                  <template v-slot="{ inputValue, inputEvents }">
+                      <div class="flex justify-start items-center mb-2">
+                          <input
+                              :value="inputValue.start"
+                              v-on="inputEvents.start"
+                              class="text-sm border px-2 py-1 rounded focus:outline-none focus:border-indigo-300"
+                          />
+                          <svg
+                              class="w-4 h-4 mx-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                          >
+                              <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                              />
+                          </svg>
+                          <input
+                              :value="inputValue.end"
+                              v-on="inputEvents.end"
+                              class="text-sm border px-2 py-1 rounded focus:outline-none focus:border-indigo-300"
+                          />
+                      </div>
+                  </template>
+                  </v-date-picker>
+              <div class="font-semibold">
+                  Frequency
+              </div>
+              <select v-model="editEventModalObj.frequency" class="border mb-2">
+                  <option value="once">Once</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+              </select>
+              <div class="font-semibold">
+                  Notes
+              </div>
+              <textarea v-model="editEventModalObj.notes" class="border">
+              </textarea>
+              <div class="flex items-center my-2">
+                  <input type="checkbox" class="text-sm h-5 w-5 text-gray-600" checked><span class="ml-2 text-gray-700">Apply changes to all future events?</span>
+              </div>
+              <div class="flex justify-end">
+                  <button @click="closeEditEventModal" class="border bg-black text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Cancel</button>
+                  <button 
+                      @click="submitEvent"
+                      :disabled="cannotSubmitEvent" 
+                      :class="{'opacity-50 cursor-not-allowed':cannotSubmitEvent}" 
+                      class="border bg-blue-600 text-white rounded w-36 mr-3 mt-3 p-1 hover:text-gray-100">Save</button>
+              </div>
+          </div>
+      </modal>
+      <modal
           v-model="showAddEventModal"
           v-if="lead"
       >
-          <div class="bg-white rounded p-6 h-full w-full md:w-min md:h-4/5 overflow-auto flex flex-col">
+          <div class="bg-white rounded p-6 h-full w-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
               <div class="font-semibold">
                   Title
               </div>
@@ -127,7 +255,7 @@
                           <input
                               :value="inputValue.start"
                               v-on="inputEvents.start"
-                              class="text-sm border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                              class="text-sm border px-2 py-1 rounded focus:outline-none focus:border-indigo-300"
                           />
                           <svg
                               class="w-4 h-4 mx-2"
@@ -145,7 +273,7 @@
                           <input
                               :value="inputValue.end"
                               v-on="inputEvents.end"
-                              class="text-sm border px-2 py-1 w-32 rounded focus:outline-none focus:border-indigo-300"
+                              class="text-sm border px-2 py-1 rounded focus:outline-none focus:border-indigo-300"
                           />
                       </div>
                   </template>
@@ -158,6 +286,7 @@
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
               </select>
               <div class="font-semibold">
                   Notes
@@ -275,7 +404,9 @@ import dayjs              from 'dayjs';
 import relativeTime       from 'dayjs/plugin/relativeTime';
 import modal              from '@/components/common/modal.vue';
 import utc from 'dayjs/plugin/utc'
-dayjs.extend(utc)
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 dayjs.extend(relativeTime);
 
 @Component({
@@ -284,11 +415,13 @@ dayjs.extend(relativeTime);
 export default class extends Vue {
     @Prop({required: true}) id!: string;
 
-    showAddEventModal = false;
-    showEditModal     = false;
-    showHistoryModal  = false;
-    historyModalObj   = {};
-    eventModalObj     = this.defaultEventModalObj();
+    showAddEventModal  = false;
+    showEditModal      = false;
+    showHistoryModal   = false;
+    historyModalObj    = {};
+    showEditEventModal = false;
+    editEventModalObj  = {};
+    eventModalObj      = this.defaultEventModalObj();
     eventRange = {
         start: new Date(),
         end:   new Date()
@@ -354,6 +487,7 @@ export default class extends Vue {
             };
             const res = await axios.post(`/api/1/events`, body)
             const { eventInstance } = res.data;
+            this.getLead();
         } catch (e) {
             console.log(e);
         }
@@ -385,6 +519,16 @@ export default class extends Vue {
         } catch (e) {
             console.log(e);
         }
+    }
+
+    openEditEventModal(obj: any) {
+        this.showEditEventModal = true;
+        this.editEventModalObj  = {...obj, range: { start: obj.start, end: obj.end }};
+    }
+
+    closeEditEventModal() {
+        this.showEditEventModal = false;
+        this.editEventModalObj  = {};
     }
 
     openAddEventModal() {
@@ -447,7 +591,6 @@ export default class extends Vue {
         if ( this.lead ) {
             this.lead.events.map((e:any) => {
                 //XXX fix this in backend
-                console.log(e)
                 if (e.created.charAt(e.created.length-1) != 'Z') {
                     e.created = e.created + 'Z';
                 }
@@ -457,7 +600,7 @@ export default class extends Vue {
                 if ( new Date(a.start) < new Date() ) return false;
                 return true;
             })
-            .sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
+            .sort((a:any,b:any) => new Date(a.start).getTime() - new Date(b.start).getTime());
         } else {
             return []
         }
@@ -468,7 +611,6 @@ export default class extends Vue {
             const events = [...this.lead.history!, ...this.lead.events!];
             events.map((e:any) => {
                 //XXX fix this in backend
-                console.log(e)
                 if (e.created.charAt(e.created.length-1) != 'Z') {
                     e.created = e.created + 'Z';
                 }
@@ -532,6 +674,9 @@ export default class extends Vue {
     }
     dayjs(date: Date) {
         return dayjs.utc(date).local()
+    }
+    get userTimezone() {
+        return dayjs.tz.guess()
     }
 }
 </script>
