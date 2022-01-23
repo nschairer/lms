@@ -17,7 +17,7 @@ export async function createNextInstance(eventId: string): Promise<EventInstance
 
 export async function insertEvent(
     event:         Event,
-    eventInstance: EventInstance,
+    range:         { start: Date, end: Date },
     txn:           Knex.Transaction
 ): Promise<EventInstance> {
     try {
@@ -25,7 +25,8 @@ export async function insertEvent(
         .insert(event)
         .returning('*')
 
-        eventInstance.event_id = newEvent.id!;
+        //Copy event_id
+        const eventInstance: EventInstance = {...event, ...range, event_id: newEvent.id!}
 
         const [newEventInstance] = await txn<EventInstance>('event_instances')
         .insert(eventInstance)

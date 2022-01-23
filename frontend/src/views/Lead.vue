@@ -44,8 +44,13 @@
                       <div class="text-xl text-left font-bold">Upcoming</div>
                       <button @click="openAddEventModal" class="rounded-full text-sm border border-black mr-3 mt-3 p-1 hover:bg-black hover:text-white flex items-center px-2"><span class="icon-plus mr-1"></span>add</button>
                   </div>
-                  <div class="p-2">
+                  <div v-if="!leadUpcoming.length" class="p-2">
                       No events scheduled. 
+                  </div>
+                  <div v-else class="p-2">
+                      <div v-for="event in leadUpcoming">
+                          {{event}}
+                      </div>
                   </div>
               </div>
           </div>
@@ -62,12 +67,12 @@
                                   <div class="text-sm text-gray-400">{{dayjs(change.created).fromNow()}}</div>
                               </div>
                               <div class="col-span-2 flex justify-center">
-                                  <span class="icon-pencil mx-2"></span>
-                                  <div class="text-sm text-gray-900">{{change.type}} <span class="text-gray-400">by</span> Noah Schairer</div>
+                                  <span :class="{[typeIconFilter(change.type)]: true}" class="mx-2"></span>
+                                  <div class="text-sm text-gray-900">{{typeFilter(change.type)}} <span class="text-gray-400">by</span> Noah Schairer</div>
                               </div>
                           </div>
                           <div>
-                              <div v-if="i < lead.history.length - 1" style="width: 1px; height: 20px;" class="bg-gray-300 ml-3"></div> 
+                              <div v-if="i < leadHistory.length - 1" style="width: 1px; height: 20px;" class="bg-gray-300 ml-3"></div> 
                           </div>
                       </div>
                   </div>
@@ -269,6 +274,8 @@ import axios              from 'axios';
 import dayjs              from 'dayjs';
 import relativeTime       from 'dayjs/plugin/relativeTime';
 import modal              from '@/components/common/modal.vue';
+import utc from 'dayjs/plugin/utc'
+dayjs.extend(utc)
 dayjs.extend(relativeTime);
 
 @Component({
@@ -340,9 +347,9 @@ export default class extends Vue {
                     frequency,
                     lead_id: this.id
                 },
-                instance: {
-                    starts: start,
-                    ends:   end
+                range: {
+                    start: start.toISOString(),
+                    end:   end.toISOString()
                 }
             };
             const res = await axios.post(`/api/1/events`, body)
@@ -361,6 +368,7 @@ export default class extends Vue {
             this.lead       = lead;
             this.leadEdit   = {...this.lead} as Lead;
             delete this.leadEdit.history;
+            delete this.leadEdit.events;
         } catch (e) {
             console.log(e);
         }
@@ -404,12 +412,74 @@ export default class extends Vue {
         delete this.leadEdit.history!;
     }
 
+
+    typeIconFilter(type: string) {
+        switch (type) {
+            case 'edit':
+                return 'icon-pencil';
+            case 'email':
+                return 'icon-mail';
+            case 'phone_call':
+                return 'icon-phone'
+            case 'meeting':
+                return 'icon-users';
+            case 'other':
+                return 'icon-plus';
+        }
+    }
+
+    typeFilter(type: string) {
+        switch (type) {
+            case 'edit':
+                return type;
+            case 'email':
+                return 'email';
+            case 'phone_call':
+                return 'call'
+            case 'meeting':
+                return 'meeting';
+            case 'other':
+                return 'other';
+        }
+    }
+
+    get leadUpcoming() {
+        if ( this.lead ) {
+            this.lead.events.map((e:any) => {
+                //XXX fix this in backend
+                console.log(e)
+                if (e.created.charAt(e.created.length-1) != 'Z') {
+                    e.created = e.created + 'Z';
+                }
+            })
+            return this.lead.events
+            .filter((a:any) => {
+                if ( new Date(a.start) < new Date() ) return false;
+                return true;
+            })
+            .sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
+        } else {
+            return []
+        }
+    }
+
     get leadHistory() {
         if ( this.lead ) {
-            this.lead.history!.map((h:any) => {
-                h.created = h.created + 'Z';
+            const events = [...this.lead.history!, ...this.lead.events!];
+            events.map((e:any) => {
+                //XXX fix this in backend
+                console.log(e)
+                if (e.created.charAt(e.created.length-1) != 'Z') {
+                    e.created = e.created + 'Z';
+                }
             })
-            return this.lead.history!.sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
+            return events
+            .filter((a:any) => {
+                if ( a.type === 'edit' ) return true;
+                if ( new Date(a.start) < new Date() ) return true;
+                return false;
+            })
+            .sort((a:any,b:any) => new Date(b.created).getTime() - new Date(a.created).getTime());
         } else {
             return []
         }
@@ -461,7 +531,7 @@ export default class extends Vue {
         return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt(0) + 0x1F1A5));
     }
     dayjs(date: Date) {
-        return dayjs(date);
+        return dayjs.utc(date).local()
     }
 }
 </script>

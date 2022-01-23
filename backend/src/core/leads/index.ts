@@ -36,6 +36,7 @@ export async function insertLeads(leads: Lead[]) {
 }
 
 export async function getLeads(): Promise<Lead[]> {
+    //XXX Page this
     return await knex('leads').select('*');
 }
 
@@ -46,13 +47,23 @@ export async function getLead(id: string): Promise<Lead> {
 
 export async function getLeadDetailed(id: string, txn?: IKnex): Promise<LeadDetailed> {
     if ( !txn ) txn = knex;
+
+    //XXX Page this
     const [lead] = await txn('leads')
     .leftJoin('history', 'leads.id', 'history.lead_id')
     .select([
         'leads.*',
         knex.raw('json_agg(history.*) filter (where history.id is not null) as history')
     ])
+    .where({'leads.id': id})
     .groupBy('leads.id') as LeadDetailed[];
+
+    //XXX Page this
+    const events = await txn('event_instances')
+    .where({lead_id: id})
+
+    lead.events = events;
+
     return lead;
 }
 

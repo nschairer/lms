@@ -29,11 +29,11 @@ const eventPostSchema = {
                 lead_id:   {type:"string"},
             }
         },
-        instance: {
+        range: {
             type: 'object',
             properties: {
-                starts:   {type:"string", format:"date"},
-                ends:     {type:"string", format:"date"},
+                start:   {type:"string", format:"date"},
+                end:     {type:"string", format:"date"},
             }
         }
     }
@@ -46,8 +46,8 @@ routes.post('/', async ( req, res, next) => {
     try {
         if ( !validateEventPost(req.body) ) throw validateEventPost.errors;
 
-        const { event, instance } = req.body as { event: Event, instance: EventInstance };
-        const eventInstance = await Events.insertEvent(event, instance, txn);
+        const { event, range } = req.body as { event: Event, range: { start: Date, end: Date }};
+        const eventInstance    = await Events.insertEvent(event, range, txn);
         await txn.commit()
         res.status(200).send({ eventInstance });
     } catch (e) {

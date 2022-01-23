@@ -63,16 +63,25 @@ export async function up(knex: Knex): Promise<void> {
           CREATE TABLE event_instances (
               id            uuid default uuid_generate_v4(),
               event_id      uuid not null,
+              start         timestamp without time zone not null,
+              "end"         timestamp without time zone not null,
+              -- Snapshot of parent event so it can be fully editable if need be should add history table too --
               created       timestamp without time zone default now() not null,
-              starts        timestamp without time zone not null,
-              ends          timestamp without time zone not null,
+              title         text not null,
+              type          text not null,
               notes         text,
+              lead_id       uuid not null,
+              frequency     text,
               props         jsonb,
               PRIMARY KEY(id),
               CONSTRAINT fk_events
                 FOREIGN KEY (event_id)
                     REFERENCES events(id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+              CONSTRAINT events_freq_check
+                CHECK ( frequency in ( 'once', 'daily', 'weekly', 'monthly', 'yearly' ) ),
+              CONSTRAINT events_type_check
+                CHECK ( type in ( 'email', 'phone_call', 'meeting', 'custom' ) )
           );
       `)
 }

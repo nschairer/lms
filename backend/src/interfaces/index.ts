@@ -12,14 +12,10 @@ export interface Event {
     notes:     string;
     lead_id:   string;
 }
-export interface EventInstance {
-    id?:       string;
+export interface EventInstance extends Event {
     event_id?: string;
-    method:    string;
-    created?:  Date;
-    starts:    Date;
-    ends:      Date;
-    notes?:    string;
+    start:     Date;
+    end:       Date;
     props?:    any;
 }
 
@@ -40,6 +36,7 @@ export interface Lead {
 
 export interface LeadDetailed extends Lead {
     history?: History[];
+    events?:  EventInstance[];
 }
 
 export interface History {

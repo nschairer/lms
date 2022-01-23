@@ -9,7 +9,7 @@ export class Scheduler {
             const work = (await knex.raw(`
                 SELECT
                     e.id,
-                    max(ei.starts) as latest
+                    max(ei.start) as latest
                 from events e
                 left join event_instances ei on e.id = ei.event_id
                 where
@@ -27,8 +27,8 @@ export class Scheduler {
             for ( let item of work ) {
                 if ( item.latest === null || item.latest.getTime() < new Date().getTime() ) {
                     const instance = await Events.createNextInstance(item.id);
-                    if ( instance.starts.getTime() < minStart ) {
-                        minStart = instance.starts.getTime();
+                    if ( instance.start.getTime() < minStart ) {
+                        minStart = instance.start.getTime();
                     }
                 } else if ( item.latest.getTime() < minStart ) {
                     minStart = item.latest.getTime()
