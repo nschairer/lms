@@ -7,6 +7,12 @@ import logger  from '@/logger';
 import config  from '@/config';
 import { authenticateToken } from '@/core/auth';
 
+//Force UTC
+const  pg    = require('pg');
+const  types = pg.types;
+types.setTypeParser(1114, function(stringValue: string) {
+        return new Date(stringValue + "+0000");
+});
 
 const app  = express()
 const port = 5000
