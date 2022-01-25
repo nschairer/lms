@@ -1,11 +1,13 @@
 import 'module-alias/register';
 
-import fs      from 'fs';
-import path    from 'path';
-import express from 'express';
-import logger  from '@/logger';
-import config  from '@/config';
-import { authenticateToken } from '@/core/auth';
+import fs        from 'fs';
+import path      from 'path';
+import express   from 'express';
+import logger    from '@/logger';
+import config    from '@/config';
+import knex      from '@/db';
+import * as Auth from '@/core/auth';
+import { User }  from '@/interfaces';
 
 //Force UTC
 const  pg    = require('pg');
@@ -34,6 +36,43 @@ fs.readdirSync(ROUTES)
         //app.use(`/api/1/${route}`, authenticateToken, a.default)
         app.use(`/api/1/${route}`, a.default)
     });
+})
+
+//Setup
+app.get('/setup', async (_, res) => {
+    const [setup] = await knex('__flags__').where({key: 'setup'});
+    res.status(200).send({setup: setup.value})
+})
+
+//Accounts
+app.post('/api/signup', async (req, res, next) => {
+    try {
+        if ( !req.body.firstname || 
+             !req.body.lastname  ||
+             !req.body.email     ||
+             !req.body.password
+           ) throw new Error('Missing required fields');
+        const { firstname, lastname, email, password } = req.body as User;
+        await Auth.createUser(firstname, lastname, email, password);
+        //XXX set token
+        const user = await Auth.login(email, password); 
+        res.status(200).send({user});
+    } catch (e) {
+        console.log(e);
+        res.status(400).send();
+    }
+})
+app.post('/api/login', async (req, res, next) => {
+    try {
+        if ( !req.body.email || !req.body.password ) throw new Error('Missing required fields');
+        const { email, password } = req.body as { email: string, password: string };
+        const user                = await Auth.login(email, password);
+        //XXX set token
+        res.status(200).send({user});
+    } catch (e) {
+        console.log(e);
+        res.status(400).send();
+    }
 })
 
 //Health check

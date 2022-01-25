@@ -7,6 +7,7 @@ import Import    from '../views/Import.vue'
 import Home      from '../views/Home.vue'
 import Layout    from '../views/Layout.vue'
 import Login     from '../views/Login.vue'
+import Setup     from '../views/Setup.vue'
 import * as Auth from '@/core/auth';
 
 Vue.use(VueRouter)
@@ -16,6 +17,11 @@ const routes: Array<RouteConfig> = [
         path: '/login',
         name: 'Login',
         component: Login,
+    },
+    {
+        path: '/setup',
+        name: 'Setup',
+        component: Setup,
     },
     {
       path: '',
@@ -60,8 +66,12 @@ const router = new VueRouter({
 
 //Auth
 router.beforeEach((to, from, next) => {
-    if ( to.name === 'Login' && Auth.user.isAuthenticated)  next({name: 'Home'})
-    if ( to.name !== 'Login' && !Auth.user.isAuthenticated) next({name: 'Login'})
+    if      ( to.name === 'Setup' && !Auth.user.isSetup)                              next()
+    else if ( !Auth.user.isSetup)                                                     next({name: 'Setup'})
+    else if ( to.name === 'Setup' && Auth.user.isSetup && !Auth.user.isAuthenticated) next({name: 'Login'})
+    else if ( to.name === 'Setup' && Auth.user.isSetup && Auth.user.isAuthenticated)  next({name: 'Home'})
+    else if ( to.name === 'Login' && Auth.user.isAuthenticated)                       next({name: 'Home'})
+    else if ( to.name !== 'Login' && !Auth.user.isAuthenticated)                      next({name: 'Login'})
     else next()
 })
 

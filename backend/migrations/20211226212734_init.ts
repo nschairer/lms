@@ -7,6 +7,25 @@ export async function up(knex: Knex): Promise<void> {
          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
          `)
     .raw(`
+         CREATE TABLE __flags__ (
+             key    text,
+             value  boolean,
+             PRIMARY KEY (key)
+         );
+         INSERT INTO __flags__
+         values
+         ('setup', false);
+     `)
+    .raw(`
+         CREATE TABLE users (
+             firstname text,
+             lastname  text,
+             email     text,
+             password  text,
+             PRIMARY KEY(email)
+         );
+    `)
+    .raw(`
          CREATE TABLE leads (
              id         uuid default uuid_generate_v4(),
              created    timestamp without time zone default now() not null,
@@ -91,10 +110,12 @@ export async function up(knex: Knex): Promise<void> {
 export async function down(knex: Knex): Promise<void> {
     await knex.schema
     .raw(`
+         DROP TABLE IF EXISTS __flags__;
          DROP TABLE IF EXISTS history;
          DROP TABLE IF EXISTS event_instances;
          DROP TABLE IF EXISTS events;
          DROP TABLE IF EXISTS leads;
+         DROP TABLE IF EXISTS users;
          DROP EXTENSION IF EXISTS "uuid-ossp";
     `)
 }

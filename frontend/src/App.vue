@@ -11,6 +11,8 @@ export default class extends Vue {
     onAuthChange(value: boolean) {
         if ( value ) {
             this.$router.push('/')
+        } else if ( !this.user.isSetup ) {
+            this.$router.push('/setup')
         } else {
             this.$router.push('/login')
         }
