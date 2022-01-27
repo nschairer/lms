@@ -65,7 +65,10 @@ const router = new VueRouter({
 })
 
 //Auth
-router.beforeEach((to, from, next) => {
+router.beforeEach( async (to, from, next) => {
+    while (Auth.user.isLoading) {
+        await new Promise(r => setTimeout(r,200));
+    }
     if      ( to.name === 'Setup' && !Auth.user.isSetup)                              next()
     else if ( !Auth.user.isSetup)                                                     next({name: 'Setup'})
     else if ( to.name === 'Setup' && Auth.user.isSetup && !Auth.user.isAuthenticated) next({name: 'Login'})

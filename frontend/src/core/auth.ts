@@ -10,6 +10,7 @@ import Vue from 'vue';
 export const user = Vue.observable({
     isAuthenticated: false,
     isSetup:         false,
+    isLoading:       true,
 })
 
 export async function login(username: string, password: string) {

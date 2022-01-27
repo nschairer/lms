@@ -1,12 +1,31 @@
 <template>
-    <router-view></router-view>
+    <div 
+        class="bg-gray-900 w-screen h-screen flex flex-col justify-center items-center"
+        v-if="user.isLoading">
+    </div>
+    <router-view v-else></router-view>
 </template>
 <script lang="ts">
+import axios                     from 'axios';
 import { Watch, Component, Vue } from 'vue-property-decorator';
-import * as Auth          from '@/core/auth';
+import * as Auth                 from '@/core/auth';
 
 @Component({})
 export default class extends Vue {
+    @Watch('user.isSetup', { deep: true })
+    onSetupChange(value: boolean) {
+        if ( value ) {
+            if ( !this.user.isAuthenticated ) {
+                this.$router.push('/login')
+            } else {
+                this.$router.push('/')
+            }
+        } else {
+            this.$router.push('/setup')
+        }
+    }
+
+    //XXX Fix redundant nav issues
     @Watch('user.isAuthenticated', { deep: true })
     onAuthChange(value: boolean) {
         if ( value ) {
@@ -18,8 +37,22 @@ export default class extends Vue {
         }
     }
 
+    async startup() {
+        try {
+            const res           = await axios.get('/api/setup/');
+            Auth.user.isSetup   = res.data.setup;
+            Auth.user.isLoading = false;
+        } catch (e) {
+        }
+    }
+
     get user() {
         return Auth.user;
+    }
+
+
+    created() {
+        this.startup();
     }
 }
 </script>

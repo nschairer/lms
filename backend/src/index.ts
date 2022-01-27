@@ -39,7 +39,7 @@ fs.readdirSync(ROUTES)
 })
 
 //Setup
-app.get('/setup', async (_, res) => {
+app.get('/api/setup', async (_, res) => {
     const [setup] = await knex('__flags__').where({key: 'setup'});
     res.status(200).send({setup: setup.value})
 })

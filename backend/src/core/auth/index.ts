@@ -12,13 +12,14 @@ export async function createUser(
     email:     string,
     password:  string
 ): Promise<User> {
+    const txn = await knex.transaction();
     try {
         //XXX Temporary
-        const [users] = await knex('users').count('*');
+        const [users] = await txn('users').count('*');
         if ( users.count > 1 ) throw new Error('Only one user supported for now.');
 
         const hash   = await bcrypt.hash(password, config.saltRounds);
-        const [user] = await knex<User>('users')
+        const [user] = await txn<User>('users')
         .insert({
             firstname,
             lastname,
@@ -26,8 +27,17 @@ export async function createUser(
             password: hash
         })
         .returning(['firstname', 'lastname', 'email'])
+
+        if ( users.count == 0 ) {
+            await txn('__flags__')
+            .update({value:true})
+            .where({key:'setup'})
+        }
+
+        await txn.commit();
         return user;
     } catch (e) {
+        await txn.rollback();
         throw e;
     }
 }
