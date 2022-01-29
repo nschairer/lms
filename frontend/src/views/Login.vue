@@ -33,16 +33,20 @@
 }
 </style>
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-import * as Auth          from '@/core/auth';
+import { Component, Vue, Prop } from 'vue-property-decorator';
+import * as Auth                from '@/core/auth';
 
 @Component({})
 export default class extends Vue {
+    @Prop({required: false}) redirect!: string;
     username: string = '';
     password: string = '';
     async login() {
         try {
             await Auth.login(this.username, this.password);
+            if ( this.redirect ) {
+                this.$router.push(this.redirect);
+            }
         } catch (e) {
             console.log(e);
         }

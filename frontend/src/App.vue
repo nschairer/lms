@@ -12,6 +12,7 @@ import * as Auth                 from '@/core/auth';
 
 @Component({})
 export default class extends Vue {
+    /*
     @Watch('user.isSetup', { deep: true })
     onSetupChange(value: boolean) {
         if ( value ) {
@@ -24,6 +25,7 @@ export default class extends Vue {
             this.$router.push('/setup')
         }
     }
+     */
 
     //XXX Fix redundant nav issues
     @Watch('user.isAuthenticated', { deep: true })
@@ -33,15 +35,13 @@ export default class extends Vue {
         } else if ( !this.user.isSetup ) {
             this.$router.push('/setup')
         } else {
-            this.$router.push('/login')
+            this.$router.push({name: 'Login', params: { redirect: this.$route.fullPath }})
         }
     }
 
     async startup() {
         try {
-            const res           = await axios.get('/api/setup/');
-            Auth.user.isSetup   = res.data.setup;
-            Auth.user.isLoading = false;
+            await Auth.setup()
         } catch (e) {
         }
     }

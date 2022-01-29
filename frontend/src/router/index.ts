@@ -17,6 +17,7 @@ const routes: Array<RouteConfig> = [
         path: '/login',
         name: 'Login',
         component: Login,
+        props: true
     },
     {
         path: '/setup',
@@ -74,7 +75,7 @@ router.beforeEach( async (to, from, next) => {
     else if ( to.name === 'Setup' && Auth.user.isSetup && !Auth.user.isAuthenticated) next({name: 'Login'})
     else if ( to.name === 'Setup' && Auth.user.isSetup && Auth.user.isAuthenticated)  next({name: 'Home'})
     else if ( to.name === 'Login' && Auth.user.isAuthenticated)                       next({name: 'Home'})
-    else if ( to.name !== 'Login' && !Auth.user.isAuthenticated)                      next({name: 'Login'})
+    else if ( to.name !== 'Login' && !Auth.user.isAuthenticated)                      next({name: 'Login', params: { redirect: to.fullPath }})
     else next()
 })
 

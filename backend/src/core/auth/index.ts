@@ -42,7 +42,7 @@ export async function createUser(
     }
 }
 
-export async function login(email: string, password: string): Promise<{user: User, token: string}> {
+export async function login(email: string, password: string): Promise<User> {
     try {
         const [user] = await knex('users')
         .select(['firstname','lastname','email','password'])
@@ -61,20 +61,24 @@ export async function login(email: string, password: string): Promise<{user: Use
 }
 
 
-function generateAccessToken(username: string) {
+export function generateAccessToken(username: string) {
     return jwt.sign({username}, config.TOKEN_SECRET, { expiresIn: '30d' });
 }
 
-export function authenticateToken(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers['authorization'];
-    const token      = authHeader && authHeader.split(' ')[1];
-    if (token === null) return res.sendStatus(401);
-    jwt.verify(token, config.TOKEN_SECRET, (err: any, user: any) => {
-        if (err) {
-            console.log(err)
-            return res.sendStatus(403)
-        }
+export async function _authenticateToken(token: string) {
+    return await jwt.verify(token, config.TOKEN_SECRET)
+}
+
+export async function authenticateToken(req: Request, res: Response, next: NextFunction) {
+    try {
+        const token = req.cookies.token || '';
+        if (!token) return res.sendStatus(401);
+        const user = await _authenticateToken(token);
         req.user = user
         next()
-    })
+    } catch (e) {
+        console.log(e);
+        //XXX TODO diff codes for required status / groups 
+        return res.sendStatus(401)
+    }
 }
