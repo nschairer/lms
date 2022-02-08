@@ -1,4 +1,5 @@
 <template>
+    <!-- Source - https://codepen.io/lhermann/pen/EBGZRZ?editors=1000 -->
     <div>
         <label for="toggle" class="flex items-center cursor-pointer">
             <div class="relative">
