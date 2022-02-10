@@ -6,7 +6,12 @@
             <div class="md:col-span-5">
                 <div class="relative rounded shadow-md p-2 flex flex-col justify-center items-center mb-2">
                     <div class="w-full flex justify-between px-2">
-                        <toggle @input="showConfirmStatusModal" class="mt-3 ml-3">{{ lead.status ? 'Active' : 'Inactive' }}</toggle>
+                        <button v-if="lead.status=='inactive'" @click="showConfirmStatusModal" class="rounded text-sm border border-yellow-300 mr-3 mt-3 p-1 bg-yellow-300 flex font-semibold hover:bg-yellow-400 items-center px-2">
+                            Inactive
+                        </button>
+                        <button v-else @click="showConfirmStatusModal" class="rounded text-sm border border-green-300 mr-3 mt-3 p-1 bg-green-300 flex font-semibold hover:bg-green-400 items-center px-2">
+                            Active
+                        </button>
                         <button @click="showEditModal = true" class="rounded-full text-sm border border-black mr-3 mt-3 p-1 hover:bg-black hover:text-white flex items-center px-2"><span class="icon-pencil mr-1"></span>edit</button>
                     </div>
                     <div class="rounded-full text-2xl bg-red-400 flex justify-center items-center font-bold text-white mt-12" style="height: 100px; width: 100px;">
@@ -397,8 +402,22 @@
             <modal
                 v-model="confirmStatusModal"
             >
-                <div class="bg-white rounded p-6 h-full w-full md:w-1/2 md:h-4/5 overflow-auto flex flex-col">
-                    Are you sure you want to mark {{lead.firstname}} {{lead.lastname}} as inactive?
+                <div class="bg-white rounded p-6 w-full md:w-1/2 overflow-auto flex flex-col">
+                    <div class="text-5xl font-semibold">
+                        Update Status
+                    </div>
+                    <div class="text-lg p-4">
+                        <div v-if="lead.active"> Marking {{lead.firstname}} {{lead.lastname}} as inactive will disable scheduling of future events.  </div>
+                        <div v-else> Marking {{lead.firstname}} {{lead.lastname}} as active will enable scheduling of future events.  </div>
+                        <toggle v-model="editLead.status" class="mt-2">{{editLead.active ? 'Active' : 'Inactive'}}</toggle>
+                    </div>
+                    <div class="flex">
+                        <button @click="cancelConfirmStatusModal" class="border border-black rounded w-full text-black bg-white mr-3 mt-3 p-1 hover:bg-black hover:text-white">Cancel</button>
+                        <button 
+                            :disabled="editLead.status != lead.status" 
+                            :class="{'opacity-25 cursor-not-allowed':!leadEditChanged, 'hover:bg-white hover:text-black':leadEditChanged}"
+                            class="border border-black rounded w-full text-white bg-black mr-3 mt-3 p-1">Confirm</button>
+                    </div>
                 </div>
             </modal>
         </div>
@@ -424,6 +443,7 @@ dayjs.extend(relativeTime);
 export default class extends Vue {
     @Prop({required: true}) id!: string;
 
+    leadActive         = false;
     confirmStatusModal = false;
     showAddEventModal  = false;
     showEditModal      = false;
@@ -533,6 +553,10 @@ export default class extends Vue {
 
     showConfirmStatusModal() {
         this.confirmStatusModal = true;
+    }
+    cancelConfirmStatusModal() {
+        this.confirmStatusModal = false;
+        this.leadActive = !this.leadActive;
     }
 
     openEditEventModal(obj: any) {
