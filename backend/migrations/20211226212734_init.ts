@@ -40,7 +40,9 @@ export async function up(knex: Knex): Promise<void> {
              state      text,
              street     text,
              zip        text,
-             PRIMARY KEY(id)
+             status     text default 'active',
+             PRIMARY KEY(id),
+             CONSTRAINT status_chk CHECK ( status in ( 'active', 'inactive' ) )
          )
      `)
      .raw(`

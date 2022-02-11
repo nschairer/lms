@@ -409,12 +409,17 @@
                     <div class="text-lg p-4">
                         <div v-if="lead.active"> Marking {{lead.firstname}} {{lead.lastname}} as inactive will disable scheduling of future events.  </div>
                         <div v-else> Marking {{lead.firstname}} {{lead.lastname}} as active will enable scheduling of future events.  </div>
-                        <toggle v-model="editLead.status" class="mt-2">{{editLead.active ? 'Active' : 'Inactive'}}</toggle>
+                        <toggle 
+                            :yes="'active'"
+                            :no="'inactive'"
+                            v-model="leadEdit.status" 
+                            class="mt-2">{{leadEdit.status === 'active' ? 'Active' : 'Inactive'}}</toggle>
                     </div>
                     <div class="flex">
                         <button @click="cancelConfirmStatusModal" class="border border-black rounded w-full text-black bg-white mr-3 mt-3 p-1 hover:bg-black hover:text-white">Cancel</button>
                         <button 
-                            :disabled="editLead.status != lead.status" 
+                            @click="confirmStatusChange"
+                            :disabled="leadEdit.status == lead.status" 
                             :class="{'opacity-25 cursor-not-allowed':!leadEditChanged, 'hover:bg-white hover:text-black':leadEditChanged}"
                             class="border border-black rounded w-full text-white bg-black mr-3 mt-3 p-1">Confirm</button>
                     </div>
@@ -443,7 +448,6 @@ dayjs.extend(relativeTime);
 export default class extends Vue {
     @Prop({required: true}) id!: string;
 
-    leadActive         = false;
     confirmStatusModal = false;
     showAddEventModal  = false;
     showEditModal      = false;
@@ -543,7 +547,7 @@ export default class extends Vue {
             const body    = { id: this.id, lead: this.leadEdit };
             const res     = await axios.put(`/api/1/leads/${this.id}`, body)
             const { lead } = res.data;
-            this.lead      = lead;
+            this.lead       = lead;
             this.closeEditModal();
             ///XXX do some loading stuff
         } catch (e) {
@@ -556,7 +560,10 @@ export default class extends Vue {
     }
     cancelConfirmStatusModal() {
         this.confirmStatusModal = false;
-        this.leadActive = !this.leadActive;
+    }
+    confirmStatusChange() {
+        this.editLead();
+        this.cancelConfirmStatusModal();
     }
 
     openEditEventModal(obj: any) {
@@ -592,6 +599,7 @@ export default class extends Vue {
         this.showEditModal = false;
         this.leadEdit      = {...this.lead};
         delete this.leadEdit.history!;
+        delete this.leadEdit.events!;
     }
 
 
@@ -722,6 +730,7 @@ export default class extends Vue {
 
     isoCountryCodeToFlagEmoji(country: string)
     {
+        if (!country) return '';
         return String.fromCodePoint(...[...country.toUpperCase()].map(c => c.charCodeAt(0) + 0x1F1A5));
     }
     dayjs(date: Date) {

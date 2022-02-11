@@ -14,17 +14,18 @@ const leadSchema = {
     properties: {
         id:        {type:"string"},
         created:   {type:"string", format: "date"},
-        firstname: {type:"string"},
-        lastname:  {type:"string"},
+        firstname: {type:["string", "null"]},
+        lastname:  {type:["string", "null"]},
         email:     {type:"string"},
-        phone:     {type:"string"},
-        source:    {type:"string"},
-        notes:     {type:"string"},
-        country:   {type:"string"},
-        city:      {type:"string"},
-        state:     {type:"string"},
-        street:    {type:"string"},
-        zip:       {type:"string"},
+        phone:     {type:["string", "null"]},
+        source:    {type:["string", "null"]},
+        notes:     {type:["string", "null"]},
+        country:   {type:["string", "null"]},
+        city:      {type:["string", "null"]},
+        state:     {type:["string", "null"]},
+        street:    {type:["string", "null"]},
+        zip:       {type:["string", "null"]},
+        status:    {enum: ['active', 'inactive']},
     }
 }
 
