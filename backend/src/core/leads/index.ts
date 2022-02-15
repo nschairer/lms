@@ -1,15 +1,7 @@
-import Ajv      from 'ajv';
 import knex     from '@/db';
 import { Lead, LeadDetailed, IKnex } from '@/interfaces';
 
-//Validation 
-const ajv    = new Ajv();
-
-ajv.addFormat('date', {
-    validate: (date: string) => new Date(date).toString() !== 'Invalid Date',
-})
-
-const leadSchema = {
+export const editSchema = {
     type: 'object',
     properties: {
         id:        {type:"string"},
@@ -28,8 +20,6 @@ const leadSchema = {
         status:    {enum: ['active', 'inactive']},
     }
 }
-
-const validateLead = ajv.compile(leadSchema);
 
 export async function insertLeads(leads: Lead[]) {
     await knex('leads')
@@ -69,9 +59,6 @@ export async function getLeadDetailed(id: string, txn?: IKnex): Promise<LeadDeta
 }
 
 export async function editLead(lead: Lead): Promise<Lead> {
-    if ( !validateLead(lead) ) {
-        throw validateLead.errors;
-    }
     const txn = await knex.transaction();
     try {
         const [old] = await txn('leads').where({id: lead.id});

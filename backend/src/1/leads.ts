@@ -2,6 +2,7 @@ import { Router }      from 'express';
 import { Lead   }      from '@/interfaces';
 import knex            from '@/db';
 import * as Leads      from '@/core/leads';
+import { AJVValidate } from '@/core/middleware';
 
 const routes = Router();
 
@@ -16,9 +17,11 @@ routes.get('/:id', async (req, res, next) => {
     }
 })
 
-routes.put('/:id', async (req, res, next) => {
+routes.put('/:id', 
+           AJVValidate({ schema: Leads.editSchema, key: 'lead' }), 
+           async (req, res, next) => {
+
     if (!req.params.id)                     return res.status(400).send();
-    if (!req.body.lead)                     return res.status(400).send();
     if (req.body.lead.id !== req.params.id) return res.status(400).send();
     try {
         const lead = await Leads.editLead(req.body.lead);
