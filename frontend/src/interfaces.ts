@@ -9,5 +9,6 @@ export interface Lead {
     email:     string;
     source:    string;
     phone:     string;
-    history?:  any[];
+    history:   any[];
+    events:    any[];
 }

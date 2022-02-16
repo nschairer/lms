@@ -460,8 +460,8 @@ export default class extends Vue {
         start: new Date(),
         end:   new Date()
     }
-    lead:     Lead | null = null;
-    leadEdit: Lead | null = null;
+    lead:     Lead | null   = null;
+    leadEdit: Partial<Lead> = {};
     created() {
         this.getLead();
     }
@@ -534,7 +534,7 @@ export default class extends Vue {
             const res       = await axios.get(`/api/1/leads/${this.id}`)
             const { lead }  = res.data;
             this.lead       = lead;
-            this.leadEdit   = {...this.lead} as Lead;
+            this.leadEdit   = {...this.lead} as Partial<Lead>;
             delete this.leadEdit.history;
             delete this.leadEdit.events;
         } catch (e) {
@@ -597,9 +597,9 @@ export default class extends Vue {
 
     closeEditModal() {
         this.showEditModal = false;
-        this.leadEdit      = {...this.lead};
-        delete this.leadEdit.history!;
-        delete this.leadEdit.events!;
+        this.leadEdit      = {...this.lead} as Partial<Lead>;
+        delete this.leadEdit.history;
+        delete this.leadEdit.events;
     }
 
 
@@ -669,18 +669,9 @@ export default class extends Vue {
                 return false;
             })
             .sort((a:any,b:any) => {
-                if ( a.type === 'edit' && b.type != 'edit' ) {
-                    return new Date(b.start).getTime() - new Date(a.created).getTime();
-                }
-                if ( a.type === 'edit' && b.type == 'edit' ) {
-                    return new Date(b.created).getTime() - new Date(a.created).getTime();
-                }
-                if ( a.type !== 'edit' && b.type == 'edit' ) {
-                    return new Date(b.created).getTime() - new Date(a.start).getTime();
-                }
-                if ( a.type !== 'edit' && b.type != 'edit' ) {
-                    return new Date(b.start).getTime() - new Date(a.start).getTime();
-                }
+                const adate = a[a.type === 'edit' ? 'created' : 'start'];
+                const bdate = b[b.type === 'edit' ? 'created' : 'start'];
+                return new Date(bdate).getTime() - new Date(adate).getTime()
             })
         } else {
             return []

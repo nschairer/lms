@@ -42,7 +42,7 @@ export default class extends Vue {
         this.checkedValue = this.booleanValue
     }
 
-    broadcast(e) {
+    broadcast(e:any) {
         this.$emit('input', this.mappedValue);
     }
 }
