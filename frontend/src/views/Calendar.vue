@@ -323,6 +323,7 @@ export default class Calendar extends Vue {
 
     get weekDays() {
         // XXX load weekdays
+        return [];
     }
 }
 </script>
