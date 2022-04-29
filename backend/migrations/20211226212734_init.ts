@@ -27,7 +27,7 @@ export async function up(knex: Knex): Promise<void> {
     `)
     .raw(`
          CREATE TABLE leads (
-             id         uuid default uuid_generate_v4(),
+             lead_id    uuid default uuid_generate_v4() primary key,
              created    timestamp without time zone default now() not null,
              firstname  text,
              lastname   text,
@@ -41,7 +41,6 @@ export async function up(knex: Knex): Promise<void> {
              street     text,
              zip        text,
              status     text default 'active',
-             PRIMARY KEY(id),
              CONSTRAINT status_chk CHECK ( status in ( 'active', 'inactive' ) )
          )
      `)
@@ -55,13 +54,14 @@ export async function up(knex: Knex): Promise<void> {
               PRIMARY KEY(id),
               CONSTRAINT fk_leads
                 FOREIGN KEY (lead_id)
-                    REFERENCES leads(id)
+                    REFERENCES leads(lead_id)
                     ON DELETE CASCADE
           );
       `)
     .raw(`--https://vertabelo.com/blog/again-and-again-managing-recurring-events-in-a-data-model/
          CREATE TABLE events (
              event_id          uuid default uuid_generate_v4() PRIMARY KEY,
+             lead_id           uuid references leads(lead_id), --- which lead this belongs to, might want this nullable for non-lead events in the future
              title             text not null,
              description       text,
              start_date        date not null,             --- first and last occurence of recurring, 
@@ -72,6 +72,7 @@ export async function up(knex: Knex): Promise<void> {
              end_time          timestamp without time zone,
              is_full_day_event boolean default false,
              is_recurring      boolean default false,       --- needs scheduling or not
+             is_cancelled      boolean default false,       --- make sure you ref to parent event when setting to true, use this for cancel all future events
              created_by        uuid not null,
              created_date      date,
              parent_event_id   uuid REFERENCES events(event_id)
