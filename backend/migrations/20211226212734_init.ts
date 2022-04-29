@@ -59,51 +59,58 @@ export async function up(knex: Knex): Promise<void> {
                     ON DELETE CASCADE
           );
       `)
-     .raw(`
-          CREATE TABLE events (
-              id        uuid default uuid_generate_v4(),
-              created   timestamp without time zone default now() not null,
-              title     text not null,
-              type      text not null,
-              notes     text,
-              lead_id   uuid not null,
-              frequency text,
-              active    boolean default true not null,
-              PRIMARY KEY (id),
-              CONSTRAINT fk_leads
-                FOREIGN KEY (lead_id)
-                    REFERENCES leads(id)
-                    ON DELETE CASCADE,
-              CONSTRAINT events_freq_check
-                CHECK ( frequency in ( 'once', 'daily', 'weekly', 'monthly', 'yearly' ) ),
-              CONSTRAINT events_type_check
-                CHECK ( type in ( 'email', 'phone_call', 'meeting', 'custom' ) )
-          );
+    .raw(`--https://vertabelo.com/blog/again-and-again-managing-recurring-events-in-a-data-model/
+         CREATE TABLE events (
+             event_id          uuid default uuid_generate_v4() PRIMARY KEY,
+             title             text not null,
+             description       text,
+             start_date        date not null,             --- first and last occurence of recurring, 
+                                                          --- null end_date for indefinitely
+                                                          --- regular events its just actual start and end date
+             end_date          date,
+             start_time        timestamp without time zone, -- start_time / end_time null if is_full_day_event
+             end_time          timestamp without time zone,
+             is_full_day_event boolean default false,
+             is_recurring      boolean default false,       --- needs scheduling or not
+             created_by        uuid not null,
+             created_date      date,
+             parent_event_id   uuid REFERENCES events(event_id)
+        );
     `)
-     .raw(`
-          CREATE TABLE event_instances (
-              id            uuid default uuid_generate_v4(),
-              event_id      uuid not null,
-              start         timestamp without time zone not null,
-              "end"         timestamp without time zone not null,
-              complete      boolean default false not null,
-              -- Snapshot of parent event so it can be fully editable if need be should add history table too --
-              created       timestamp without time zone default now() not null,
-              title         text not null,
-              type          text not null,
-              notes         text,
-              lead_id       uuid not null,
-              frequency     text,
-              props         jsonb,
-              PRIMARY KEY(id),
-              CONSTRAINT fk_events
-                FOREIGN KEY (event_id)
-                    REFERENCES events(id)
-                    ON DELETE CASCADE,
-              CONSTRAINT events_freq_check
-                CHECK ( frequency in ( 'once', 'daily', 'weekly', 'monthly', 'yearly' ) ),
-              CONSTRAINT events_type_check
-                CHECK ( type in ( 'email', 'phone_call', 'meeting', 'custom' ) )
+    .raw(`
+         CREATE TABLE recurring_types (
+             recurring_type_id serial primary key,
+             recurring_type    text not null unique -- daily, monthly, ...
+         );
+     `)
+    .raw(`
+         CREATE TABLE recurring_patterns (
+             event_id              uuid primary key references events(event_id), -- one pattern per event
+             recurring_type_id     serial       REFERENCES recurring_types(recurring_type_id),
+             separation_count      int not null, -- e.g every other week -- this equals 1 so you wait a week
+             max_num_of_occurences int not null, -- number of mettings, occurences, etc. 
+             day_of_week           int not null, -- good for weekly recurrence
+             week_of_month         int not null, -- this and day_of_month good for monthly
+             day_of_month          int not null,
+             month_of_year         int not null  -- good for yearly
+         );
+     `)
+     .raw(` -- this table is good for one off edits
+            -- but if a user changes "ALL" future events, create a new event
+            -- and ref the old event with parent_event_id to avoid a mess
+            -- helps with cleanly editing all this stuff
+          CREATE TABLE event_instance_exceptions (
+              event_instance_exception_id uuid default uuid_generate_v4() primary key,
+              event_id                    uuid references events(event_id),
+              is_rescheduled              boolean,
+              is_cancelled                boolean,
+              start_date                  date,
+              end_date                    date,
+              start_time                  timestamp,
+              end_time                    timestamp,
+              is_full_day_event           boolean,
+              created_by                  uuid not null,
+              created_date                date
           );
       `)
 }
@@ -114,7 +121,9 @@ export async function down(knex: Knex): Promise<void> {
     .raw(`
          DROP TABLE IF EXISTS __flags__;
          DROP TABLE IF EXISTS history;
-         DROP TABLE IF EXISTS event_instances;
+         DROP TABLE IF EXISTS event_instance_exceptions;
+         DROP TABLE IF EXISTS recurring_patterns;
+         DROP TABLE IF EXISTS recurring_types;
          DROP TABLE IF EXISTS events;
          DROP TABLE IF EXISTS leads;
          DROP TABLE IF EXISTS users;
